@@ -1,0 +1,20 @@
+{
+  "name": "runner-cli",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "edit-json-file": "^1.4.1",
+    "nedb": "^1.8.0",
+    "path": "^0.12.7"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "start": "node index",
+    "dev": "nodemon index",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "ਮਨਪ੍ਰੀਤ ਸਿੰਘ || Manpreet Singh <rdhaliwal97@outlook.com> (https://github.com/rdhaliwal97)",
+  "license": "ISC"
+}
