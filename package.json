@@ -12,10 +12,9 @@
   "devDependencies": {},
   "scripts": {
     "start": "node index",
-    "dev": "nodemon index",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon index"
   },
   "keywords": [],
-  "author": "ਮਨਪ੍ਰੀਤ ਸਿੰਘ || Manpreet Singh <rdhaliwal97@outlook.com> (https://github.com/rdhaliwal97)",
-  "license": "ISC"
+  "author": "Onetesthub (https://onetesthub.com)",
+  "license": "onetesthub"
 }
