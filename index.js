@@ -1,13 +1,56 @@
 const { responseStatus } = require('./const');
-let initProject = require('./dbFunctions');
-let { fetchRequests, getRootSuites, getNestedSuites, getHead } = initProject({ projectPath: "C:\\Users\\DELL\\Desktop\\request_test" });
+const initProject = require('./dbFunctions');
+const fs = require('fs');
+const path = require('path');
+
 class SuiteData {
   constructor({ projectPath }) {
-    this.projectPath = projectPath;
-    this.desiredSuiteIds = [];
-    this.allSuiteIds = [];
+    return new Promise((resolve, reject) => {
+      this.bootstrapProjectt(projectPath)
+        .then(status => {
+          if (status.status === responseStatus.success) {
+            resolve({ ...status, data: this })
+          }
+          else {
+            resolve(status);
+          }
+        })
+        .catch(err => {
+          console.log(err);
+          resolve({ status: responseStatus.error, message: 'Run tim exception during initilization' });
+        });
+    });
   }
-
+  bootstrapProjectt(projectPath) {
+    return new Promise((resolve, reject) => {
+      try {
+        if (!projectPath) return ({ status: responseStatus.empty, message: 'Path not defined' });
+        let metaFilePath = path.join(projectPath, 'metaInfo.db');
+        // Check if the file exists in the current directory.
+        fs.access(metaFilePath, fs.constants.F_OK, (err) => {
+          if (err) {
+            resolve({ status: responseStatus.error, message: 'Valid Jetman project not found' });
+          } else {
+            fs.access(metaFilePath, fs.constants.R_OK, (err) => {
+              if (err) {
+                resolve({ status: responseStatus.error, message: "Given Jetman project doesn't have read permission" });
+              }
+              else {
+                this.projectPath = projectPath;
+                this.dbFunctions = initProject({ projectPath });
+                this.desiredSuiteIds = [];
+                this.allSuiteIds = [];
+                resolve({ status: responseStatus.success, message: 'Project successfully Bootstrapped' });
+              }
+            });
+          }
+        })
+      } catch (e) {
+        console.log('e :>> ', e);
+        resolve({ status: responseStatus.error, message: 'Unexpected Error' });
+      }
+    });
+  }
   getSortedSuiteIds() {
     return this.desiredSuiteIds;
   }
@@ -35,11 +78,11 @@ class SuiteData {
   }
 
   async initSuites() {
-    let suiteRes = await getRootSuites();
+    let suiteRes = await this.dbFunctions.getRootSuites();
     if (suiteRes.status === responseStatus.success) {
       let rootSuites = suiteRes.data;
       for (const rootSuite of rootSuites) {
-        const nestedSuitesMap = await getNestedSuites(rootSuite._id);
+        const nestedSuitesMap = await this.dbFunctions.getNestedSuites(rootSuite._id);
         let nestedSuiteIds = Object.keys(nestedSuitesMap);
         for (const nestedSuiteId of nestedSuiteIds) {
           this.allSuiteIds.push(nestedSuiteId);
@@ -49,19 +92,29 @@ class SuiteData {
     }
   }
 
+  async getSuiteObj() {
+
+  }
+
   async getSortedRequests(desiredSuiteIds) {
     if (desiredSuiteIds) this.setSortedSuiteIds(desiredSuiteIds);
     let filteredSuiteIds = this.getSortedSuiteIds();
     let sortedReqArray = [];
     for (const suiteId of filteredSuiteIds) {
-      let headRes = await getHead(suiteId);
+      let headRes = await this.dbFunctions.getHead(suiteId);
       if (headRes.status !== responseStatus.success) return;
       let { headReq } = headRes.data;
       if (!headReq) continue
-      let requestsOfSuite = await fetchRequests(headReq);
+      let requestsOfSuite = await this.dbFunctions.fetchRequests(headReq);
       if (requestsOfSuite.status === responseStatus.success) {
         for (const req of requestsOfSuite.data) {
-          let reqDetail = { suiteId, req };//! suiteid, name, path, req
+          let suiteRes = await this.dbFunctions.getSuiteNameById(suiteId);
+          if (!suiteRes) console.error('error');
+          const suiteid = req.parent
+          const reqName = req.reqName;
+          if (req.parent) delete req.parent;
+          if (req.reqName) delete req.reqName;
+          let reqDetail = { suiteName: suiteRes, suiteId: suiteid, reqName, req };//! suiteid, name, path, req
           sortedReqArray.push(reqDetail)
         }
       }
@@ -72,7 +125,7 @@ class SuiteData {
   async getNestedSortedSuiteIds(desiredSuiteIds) {
     let sortedSuiteArray = [];
     for (const suiteId of desiredSuiteIds) {
-      const nestedSuitesMap = await getNestedSuites(suiteId);
+      const nestedSuitesMap = await this.dbFunctions.getNestedSuites(suiteId);
       let nestedSuiteIds = Object.keys(nestedSuitesMap);
       sortedSuiteArray = [...sortedSuiteArray, ...nestedSuiteIds];
     }
@@ -88,12 +141,18 @@ class SuiteData {
 }
 //! init class
 const testModule = async () => {
-  const suiteData = new SuiteData({ projectPath: "C:\\Users\\DELL\\Desktop\\request_test" });
+  const suiteDataRes = await (new SuiteData({ projectPath: "C:\\Users\\DELL\\Desktop\\request_test" }));
+  if (suiteDataRes.status !== responseStatus.success) {
+    console.error(suiteDataRes);
+    return (suiteDataRes)
+  }
+  console.log(suiteDataRes.message);
+  const suiteData = suiteDataRes.data;
   await suiteData.initSuites();
-  // await suiteData.setSortedSuiteIds();
-
-  let sortedSuite = suiteData.getSortedSuiteIds();
-  // let sortedReq = await suiteData.getNestedSortedRequests(['i0i1QsukBDrEOoMa']);
+  // // await suiteData.setSortedSuiteIds();
+  // let sortedSuite = suiteData.getSortedSuiteIds();
+  // // let sortedReq = await suiteData.getNestedSortedRequests(['i0i1QsukBDrEOoMa']);
   let sortedReq = await suiteData.getSortedRequests(['i0i1QsukBDrEOoMa']);
   console.log("sortedReq :>> ", sortedReq);
-}
+};
+testModule();

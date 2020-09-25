@@ -8,7 +8,7 @@ module.exports = init = ({ projectName, projectPath }) => {
   REQUEST_DB = dbs.REQUEST_DB;
   ENV_DB = dbs.ENV_DB;
   META_DB = dbs.META_DB;
-  return { getHead, getRootSuites, getRootSuiteId, fetchSuites, fetchRequests, getNestedSuites };
+  return { getHead, getRootSuites, getRootSuiteId, fetchSuites, fetchRequests, getNestedSuites, getSuiteNameById };
 }
 
 function getHead(suiteId) {
@@ -28,6 +28,11 @@ function getHead(suiteId) {
       resolve({ status: responseStatus.error, message: "Unexpected error" });
     }
   });
+}
+async function getSuiteNameById(suiteId) {
+  let suiteDbResponse = await SUITE_DB.findOne({ _id: suiteId });
+  if (suiteDbResponse.status !== responseStatus.success) return;
+  return suiteDbResponse.data.suiteName;
 }
 async function getRootSuites() {
   return new Promise(async (resolve, reject) => {
