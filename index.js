@@ -9,9 +9,8 @@ class SuiteData {
       this.bootstrapProjectt(projectPath)
         .then(status => {
           if (status.status === responseStatus.success) {
-            resolve({ ...status, data: this })
-          }
-          else {
+            resolve({ ...status, data: this });
+          } else {
             resolve(status);
           }
         })
@@ -24,18 +23,17 @@ class SuiteData {
   bootstrapProjectt(projectPath) {
     return new Promise((resolve, reject) => {
       try {
-        if (!projectPath) return ({ status: responseStatus.empty, message: 'Path not defined' });
+        if (!projectPath) return { status: responseStatus.empty, message: 'Path not defined' };
         let metaFilePath = path.join(projectPath, 'metaInfo.db');
         // Check if the file exists in the current directory.
-        fs.access(metaFilePath, fs.constants.F_OK, (err) => {
+        fs.access(metaFilePath, fs.constants.F_OK, err => {
           if (err) {
             resolve({ status: responseStatus.error, message: 'Valid Jetman project not found' });
           } else {
-            fs.access(metaFilePath, fs.constants.R_OK, (err) => {
+            fs.access(metaFilePath, fs.constants.R_OK, err => {
               if (err) {
                 resolve({ status: responseStatus.error, message: "Given Jetman project doesn't have read permission" });
-              }
-              else {
+              } else {
                 this.projectPath = projectPath;
                 this.dbFunctions = initProject({ projectPath });
                 this.desiredSuiteIds = [];
@@ -44,7 +42,7 @@ class SuiteData {
               }
             });
           }
-        })
+        });
       } catch (e) {
         console.log('e :>> ', e);
         resolve({ status: responseStatus.error, message: 'Unexpected Error' });
@@ -92,9 +90,7 @@ class SuiteData {
     }
   }
 
-  async getSuiteObj() {
-
-  }
+  async getSuiteObj() {}
 
   async getSortedRequests(desiredSuiteIds) {
     if (desiredSuiteIds) this.setSortedSuiteIds(desiredSuiteIds);
@@ -104,18 +100,18 @@ class SuiteData {
       let headRes = await this.dbFunctions.getHead(suiteId);
       if (headRes.status !== responseStatus.success) return;
       let { headReq } = headRes.data;
-      if (!headReq) continue
+      if (!headReq) continue;
       let requestsOfSuite = await this.dbFunctions.fetchRequests(headReq);
       if (requestsOfSuite.status === responseStatus.success) {
         for (const req of requestsOfSuite.data) {
           let suiteRes = await this.dbFunctions.getSuiteNameById(suiteId);
           if (!suiteRes) console.error('error');
-          const suiteid = req.parent
+          const suiteid = req.parent;
           const reqName = req.reqName;
           if (req.parent) delete req.parent;
           if (req.reqName) delete req.reqName;
-          let reqDetail = { suiteName: suiteRes, suiteId: suiteid, reqName, req };//! suiteid, name, path, req
-          sortedReqArray.push(reqDetail)
+          let reqDetail = { suiteName: suiteRes, suiteId: suiteid, reqName, req }; //! suiteid, name, path, req
+          sortedReqArray.push(reqDetail);
         }
       }
     }
@@ -139,20 +135,5 @@ class SuiteData {
     return sortedReq;
   }
 }
-//! init class
-const testModule = async () => {
-  const suiteDataRes = await (new SuiteData({ projectPath: "C:\\Users\\DELL\\Desktop\\request_test" }));
-  if (suiteDataRes.status !== responseStatus.success) {
-    console.error(suiteDataRes);
-    return (suiteDataRes)
-  }
-  console.log(suiteDataRes.message);
-  const suiteData = suiteDataRes.data;
-  await suiteData.initSuites();
-  // // await suiteData.setSortedSuiteIds();
-  // let sortedSuite = suiteData.getSortedSuiteIds();
-  // // let sortedReq = await suiteData.getNestedSortedRequests(['i0i1QsukBDrEOoMa']);
-  let sortedReq = await suiteData.getSortedRequests(['i0i1QsukBDrEOoMa']);
-  console.log("sortedReq :>> ", sortedReq);
-};
-testModule();
+
+module.exports = { SuiteData: SuiteData };
