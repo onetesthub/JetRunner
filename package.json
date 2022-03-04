@@ -4,12 +4,11 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
+    "@seald-io/nedb": "^2.0.4",
     "edit-json-file": "^1.4.1",
     "fs": "0.0.1-security",
-    "nedb": "^1.8.0",
     "path": "^0.12.7"
   },
-  "devDependencies": {},
   "scripts": {
     "start": "node index",
     "dev": "nodemon index"
