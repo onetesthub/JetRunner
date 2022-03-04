@@ -1,4 +1,4 @@
-const Datastore = require("nedb");
+const Datastore = require("@seald-io/nedb");
 let path = require('path');
 module.exports = (projectPath) => {
   return {
